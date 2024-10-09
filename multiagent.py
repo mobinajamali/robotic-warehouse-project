@@ -9,8 +9,23 @@ class MultiAgent:
         self.agents = []
         ckp_dir += scenario
         for i in range(n_agents):
-            self.agents.append(Agent(actor_dim=actor_dims[i], critic_dim=critic_dims, n_actions=6, n_agents=n_agents, agent_id=i, 
+            ###action = list(env.action_space.keys())[i]
+            self.agents.append(Agent(actor_dim=actor_dims[i], critic_dim=critic_dims, n_actions=n_actions[i], n_agents=n_agents, agent_id=i, 
                                      lr_actor=lr_actor, lr_critic=lr_critic, tau=tau, fc1_dim=fc1_dim, fc2_dim=fc2_dim, ckp_dir=ckp_dir, gamma=gamma))
+
+    def choose_action(self, obs):
+        ###actions = []
+        actions = {}
+        ### for agent_id, agent in enumerate(self.agents):
+        for agent_id, agent in zip(obs, self.agents):
+            action = agent.choose_action(obs[agent_id])
+            actions[agent_id] = action
+            #print(f"Chosen action for agent {agent_id}: {action}")
+        return actions
+
+    def learn(self, memory):
+        for agent in self.agents:
+            agent.learn(memory, self.agents)
 
     def save_checkpoint(self):
         for agent in self.agents:
@@ -20,14 +35,3 @@ class MultiAgent:
         for agent in self.agents:
             agent.load_models()
 
-    def choose_action(self, obs, evaluate=False):
-        actions = []
-        for agent_id, agent in enumerate(self.agents):
-            action = agent.choose_action(obs, evaluate)
-            actions.append(action)
-            print(f"Chosen action for agent {agent_id}: {action}")
-        return actions
-
-    def learn(self, memory):
-        for agent in self.agents:
-            agent.learn(memory, self.agents)
