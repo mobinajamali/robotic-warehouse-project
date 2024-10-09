@@ -23,10 +23,12 @@ def main():
         action_space = env.action_space[agent]
 
         actor_dims.append(obs_space.shape[0])
-        n_actions.append(action_space.n)  
-
-    critic_dims = sum(actor_dims)
+        n_actions.append(action_space.n)
+ 
+    ###critic_dims = sum(actor_dims)
+    critic_dims = sum(actor_dims) + sum(n_actions)
     agents = MultiAgent(actor_dims=actor_dims, critic_dims=critic_dims, n_agents=n_agents, n_actions=n_actions, env=env, ckp_dir='tmp/', gamma=0.95, lr_actor=1e-4, lr_critic=1e-3)
+    critic_dims = sum(actor_dims)
     memory = Replay(mem_size=1_000_000, critic_dims=critic_dims, actor_dims=actor_dims, n_actions=n_actions, n_agents=n_agents, batch_size=1024)
 
     MAX_STEPS = 1_000_000
@@ -49,14 +51,23 @@ def main():
         while not (done or trunc):
             if evaluate:
                 env.render()
-
+            obs = {i: obs[i] for i in range(len(obs))}
             actions = agents.choose_action(obs)
+            actions = list(actions.values())
             obs_, reward, done, trunc, info = env.step(actions)
+            
+            obs = list(obs.values())
+            obs_ = list(obs_)
             state = obs_list_to_state_vector(obs)
             state_ = obs_list_to_state_vector(obs_)
+            #print(f'obs: {obs}')
+            #print(f'obs_: {obs_}')
+            #print(f'state: {state}')
+            #print(f'state_: {state_}')
 
+            #terminal = [d or t for d, t in zip(done, trunc)]
             if episode_step >= MAX_STEPS:
-                done = True
+                terminal = True
 
             memory.store_transition(obs, state, actions, reward,
                                     obs_, state_, done)
