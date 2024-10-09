@@ -16,7 +16,8 @@ class Replay:
         self.state_mem = np.zeros((self.mem_size, self.critic_dims))
         self.new_state_mem = np.zeros((self.mem_size, self.critic_dims))
         self.reward_mem = np.zeros((self.mem_size, self.n_agents))
-        self.terminal_mem = np.zeros((self.mem_size, self.n_agents), dtype=bool)
+        ### self.terminal_mem = np.zeros((self.mem_size, self.n_agents), dtype=bool)
+        self.terminal_mem = np.zeros(self.mem_size, dtype=bool)
 
         self.initialize_actor_mem()
 
@@ -31,6 +32,7 @@ class Replay:
             self.actor_action_mem.append(np.zeros((self.mem_size, self.n_actions[i])))
 
     def store_transition(self, obs, state, action, reward, obs_, state_, done):
+        '''state = concat obs of all agents'''
         index = self.mem_cntr % self.mem_size 
         self.state_mem[index] = state 
         self.new_state_mem[index] = state_
@@ -53,15 +55,15 @@ class Replay:
         rewards = self.reward_mem[batch]
         dones = self.terminal_mem[batch]
 
-        actor_state_mem = []
-        actor_new_state_mem = []
-        actor_action_mem = []
+        actor_state = []
+        actor_new_state = []
+        actor_action = []
         for i in range(self.n_agents):
-            actor_state_mem.append(self.actor_state_mem[i][batch])
-            actor_new_state_mem.append(self.actor_new_state_mem[i][batch])
-            actor_action_mem.append(self.actor_action_mem[i][batch])
+            actor_state.append(self.actor_state_mem[i][batch])
+            actor_new_state.append(self.actor_new_state_mem[i][batch])
+            actor_action.append(self.actor_action_mem[i][batch])
 
-        return actor_state_mem, states, actor_action_mem, rewards, actor_new_state_mem, states_, dones
+        return actor_state, states, actor_action, rewards, actor_new_state, states_, dones
     
     def ready(self):
         return self.mem_cntr > self.batch_size
